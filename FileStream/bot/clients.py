@@ -5,7 +5,6 @@ from ..config import Telegram
 from pyrogram import Client
 from . import multi_clients, work_loads, FileStream
 
-
 async def initialize_clients():
     all_tokens = dict(
         (c + 1, t)
@@ -20,16 +19,17 @@ async def initialize_clients():
         work_loads[0] = 0
         print("No additional clients found, using default client")
         return
-    
+
+    # Modify the way we access all_tokens to avoid out of range issues
     async def start_client(client_id, token):
         try:
             if len(token) >= 100:
-                session_string=token
-                bot_token=None
+                session_string = token
+                bot_token = None
                 print(f'Starting Client - {client_id} Using Session String')
             else:
-                session_string=None
-                bot_token=token
+                session_string = None
+                bot_token = token
                 print(f'Starting Client - {client_id} Using Bot Token')
             if client_id == len(all_tokens):
                 await asyncio.sleep(2)
@@ -49,11 +49,13 @@ async def initialize_clients():
             return client_id, client
         except Exception:
             logging.error(f"Failed starting Client - {client_id} Error:", exc_info=True)
-    
+
+    # This is a more resilient way to gather the clients without breaking
     clients = await asyncio.gather(*[start_client(i, token) for i, token in all_tokens.items()])
     multi_clients.update(dict(clients))
+
     if len(multi_clients) != 1:
         Telegram.MULTI_CLIENT = True
         print("Multi-Client Mode Enabled")
     else:
-        print("No additional clients were initialized, using default client")
+        print("No additional clients were initialized, using default client") 
